@@ -79,7 +79,7 @@ AP6354需要固件文件：
 ```
 
 可从以下项目获取固件：
-- [Fine3399项目](https://github.com/QXY716/Fine3399-rk3399-armbian)
+- [Fine3399项目](https://github.com/QXY716/Fine3399-rk3399-armbian) - 包含AP6354固件文件和配置示例
 
 ### 与Android DTS的主要差异
 
@@ -185,7 +185,7 @@ AP6354 requires firmware files:
 ```
 
 Get firmware from:
-- [Fine3399 Project](https://github.com/QXY716/Fine3399-rk3399-armbian)
+- [Fine3399 Project](https://github.com/QXY716/Fine3399-rk3399-armbian) - Contains AP6354 firmware files and configuration examples
 
 ### Key Differences from Android DTS
 

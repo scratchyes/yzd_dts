@@ -53,6 +53,14 @@
    - 节点: pcie@f8000000
    - 状态: 已禁用（可根据需要启用）
 
+## ⚠️ 重要提示
+
+**在使用本DTS之前，请注意：**
+1. 本DTS基于Android BSP转换而来，部分GPIO和硬件配置可能需要根据您的实际硬件板调整
+2. 请确认您的板子与YZD开发板的硬件设计一致
+3. 使用不兼容的U-Boot或设备树可能导致设备无法启动
+4. 建议先在测试环境验证所有功能
+
 ## Armbian集成步骤
 
 ### 1. 准备设备树文件
@@ -129,8 +137,16 @@ AP6354需要Broadcom固件文件：
 
 ### 5. U-Boot配置
 
-根据Fine3399项目经验，需要使用兼容的U-Boot版本。可以参考：
+⚠️ **警告：使用不兼容的U-Boot可能导致设备变砖！**
+
+根据Fine3399项目经验，需要使用兼容的U-Boot版本。参考：
 - https://github.com/QXY716/u-boot/blob/main/u-boot/rockchip/fine3399/uboot-bozz-rk3399.bin
+
+**使用U-Boot前必须：**
+1. 验证MD5/SHA256校验和
+2. 确认与您的硬件版本兼容
+3. 准备好恢复方案（如Maskrom模式刷机工具）
+4. 在测试设备上先行验证
 
 ### 6. 设备树在Armbian中的位置
 
@@ -215,13 +231,6 @@ lsusb -t
 - **Fine3399 DTS参考**: https://github.com/cm9vdA/build-linux/blob/master/boot/dts/rockchip/mainline/rk3399-fine3399.dts
 - **Ophub Armbian项目**: https://github.com/ophub/amlogic-s9xxx-armbian
 - **RK3399技术参考手册**: Rockchip官方文档
-
-## 注意事项
-
-1. 当前DTS基于Android BSP转换而来，部分配置可能需要根据实际硬件调整
-2. GPIO引脚配置应与实际硬件板对应
-3. 电源管理配置可能需要微调以优化功耗
-4. 建议在测试环境中先验证所有功能后再部署到生产环境
 
 ## 技术支持
 
