@@ -108,18 +108,16 @@ armbian-prep: dtb
 		cp -v firmware/brcm/* $(ARMBIAN_BUILD_DIR)/userpatches/overlay/lib/firmware/brcm/ 2>/dev/null || true; \
 	fi
 	@echo "创建板级配置文件..."
-	@cat > $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf << 'EOF'
-# RK3399-YZD Board Configuration
-BOARD_NAME="RK3399-YZD"
-BOARDFAMILY="rk3399"
-BOARD_MAINTAINER=""
-BOOTCONFIG="rk3399_defconfig"
-KERNEL_TARGET="current,edge"
-FULL_DESKTOP="yes"
-BOOT_LOGO="desktop"
-BOOT_FDT_FILE="rockchip/rk3399-yzd.dtb"
-PACKAGE_LIST_BOARD="wireless-tools wpasupplicant bluez bluez-tools"
-EOF
+	@echo '# RK3399-YZD Board Configuration' > $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOARD_NAME="RK3399-YZD"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOARDFAMILY="rk3399"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOARD_MAINTAINER=""' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOOTCONFIG="rk3399_defconfig"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'KERNEL_TARGET="current,edge"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'FULL_DESKTOP="yes"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOOT_LOGO="desktop"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'BOOT_FDT_FILE="rockchip/rk3399-yzd.dtb"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
+	@echo 'PACKAGE_LIST_BOARD="wireless-tools wpasupplicant bluez bluez-tools"' >> $(ARMBIAN_BUILD_DIR)/config/boards/$(BOARD_NAME).conf
 	@echo "$(GREEN)Armbian构建环境准备完成!$(NC)"
 	@echo "构建目录: $(ARMBIAN_BUILD_DIR)"
 
