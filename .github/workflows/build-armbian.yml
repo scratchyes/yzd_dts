@@ -151,6 +151,81 @@ jobs:
           echo "固件下载完成"
           ls -lh build/userpatches/overlay/lib/firmware/brcm/
 
+      - name: Configure Armbian build for resilient apt operations
+        working-directory: /builder
+        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "配置Armbian构建系统以处理apt镜像同步问题..."
+          
+          # 创建自定义扩展目录
+          mkdir -p build/userpatches/extensions
+          
+          # 创建一个自定义扩展来配置apt重试和超时
+          # 使用post_create_rootfs_cache和pre_install_kernel_debs钩子确保早期配置
+          cat > build/userpatches/extensions/apt-retry-config.sh << 'EOF'
+          #!/bin/bash
+          
+          # 此扩展增强apt操作的容错能力，特别是针对镜像同步问题
+          
+          function extension_metadata_apt_retry_config() {
+            display_alert "启用apt重试配置扩展" "增强对apt.armbian.com镜像同步问题的容错能力" "info"
+            declare -g EXTENSION_PRIORITY=100  # 早期运行
+          }
+          
+          # 共享的APT配置内容
+          function _create_apt_retry_config() {
+            local target_dir="$1"
+            
+            # 确保目录存在
+            if [[ ! -d "${target_dir}" ]]; then
+              mkdir -p "${target_dir}" || {
+                display_alert "无法创建APT配置目录" "${target_dir}" "wrn"
+                return 1
+              }
+            fi
+            
+            # 创建配置文件
+            if cat > "${target_dir}/99custom-retries" << 'APTCONF'; then
+          # 重试15次以应对镜像同步期间的临时失败（默认为3次）
+          Acquire::Retries "15";
+          # 3分钟HTTP超时，为镜像同步提供充足时间（默认60秒）
+          Acquire::http::Timeout "180";
+          # 3分钟HTTPS超时，为镜像同步提供充足时间（默认60秒）
+          Acquire::https::Timeout "180";
+          # 3分钟FTP超时，为镜像同步提供充足时间（默认60秒）
+          Acquire::ftp::Timeout "180";
+          APTCONF
+              display_alert "APT配置文件已创建" "${target_dir}/99custom-retries" "info"
+              return 0
+            else
+              display_alert "无法创建APT配置文件" "${target_dir}/99custom-retries" "wrn"
+              return 1
+            fi
+          }
+          
+          # 在准备chroot环境后、apt update前配置
+          function pre_install_kernel_debs__configure_apt_retries() {
+            display_alert "配置APT重试和超时" "设置重试次数和超时时间" "info"
+            
+            # 在chroot环境中创建APT配置
+            if [[ -d "${SDCARD}" ]]; then
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d"
+            fi
+          }
+          
+          # 也在更早的阶段配置，以防第一个钩子太晚
+          function post_create_rootfs_cache__configure_apt_retries() {
+            display_alert "早期配置APT重试" "在rootfs缓存创建后配置" "info"
+            
+            if [[ -d "${SDCARD}" ]]; then
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d"
+            fi
+          }
+          EOF
+          chmod +x build/userpatches/extensions/apt-retry-config.sh
+          
+          echo "Armbian apt重试配置扩展已创建"
+
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
         working-directory: /builder
@@ -169,7 +244,9 @@ jobs:
             EXPERT=yes \
             KERNEL_CONFIGURE=no \
             COMPRESS_OUTPUTIMAGE="sha,xz" \
-            SHARE_LOG=yes
+            SHARE_LOG=yes \
+            ENABLE_EXTENSIONS=yes \
+            EXT=apt-retry-config
           
           echo "status=success" >> ${GITHUB_OUTPUT}
 
