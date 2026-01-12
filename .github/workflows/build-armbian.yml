@@ -185,15 +185,18 @@ jobs:
             fi
             
             # 创建配置文件
-            cat > "${target_dir}/99custom-retries" << 'APTCONF'
+            if cat > "${target_dir}/99custom-retries" << 'APTCONF'; then
+          # 重试15次以应对镜像同步期间的临时失败（默认为3次）
           Acquire::Retries "15";
+          # 3分钟HTTP超时，为镜像同步提供充足时间（默认60秒）
           Acquire::http::Timeout "180";
+          # 3分钟HTTPS超时，为镜像同步提供充足时间（默认60秒）
           Acquire::https::Timeout "180";
+          # 3分钟FTP超时，为镜像同步提供充足时间（默认60秒）
           Acquire::ftp::Timeout "180";
+          # 访问模式队列，改善临时错误的处理
           Acquire::Queue-Mode "access";
           APTCONF
-            
-            if [[ $? -eq 0 ]]; then
               display_alert "APT配置文件已创建" "${target_dir}/99custom-retries" "info"
               return 0
             else
@@ -232,7 +235,6 @@ jobs:
         run: |
           cd build/
           # 使用orangepi4-lts作为基础板（RK3399平台）
-          # ENABLE_EXTENSIONS=yes 启用自定义扩展
           ./compile.sh \
             RELEASE=${{ inputs.set_release }} \
             BOARD=orangepi4-lts \
