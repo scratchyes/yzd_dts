@@ -256,9 +256,15 @@ jobs:
             # 解压镜像（如果是压缩的）
             if [[ "$IMAGE_FILE" == *.xz ]]; then
               echo "解压镜像..."
-              xz -d "$IMAGE_FILE"
+              # 使用 sudo 解压以避免权限问题，并忽略文件属性警告
+              sudo xz -d "$IMAGE_FILE" 2>/dev/null || sudo xz -d --no-warn "$IMAGE_FILE" || {
+                echo "解压失败，尝试使用管道方式..."
+                sudo xz -dc "$IMAGE_FILE" > "${IMAGE_FILE%.xz}"
+                sudo rm -f "$IMAGE_FILE"
+              }
               IMAGE_FILE="${IMAGE_FILE%.xz}"
               echo "解压后: $IMAGE_FILE"
+              ls -lh "$IMAGE_FILE" 2>/dev/null || echo "文件可能需要 sudo 访问"
             fi
             
             # 挂载镜像
@@ -280,7 +286,7 @@ jobs:
             
             # 重新压缩
             echo "重新压缩镜像..."
-            xz -z -9 -v "$IMAGE_FILE"
+            sudo xz -z -9 -v "$IMAGE_FILE"
             
             echo "DTB集成完成"
           else
