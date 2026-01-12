@@ -161,7 +161,7 @@ jobs:
           mkdir -p build/userpatches/extensions
           
           # 创建一个自定义扩展来配置apt重试和超时
-          # 这个扩展会在chroot_prepare_distccd钩子之后、apt update之前运行
+          # 使用post_create_rootfs_cache和pre_install_kernel_debs钩子确保早期配置
           cat > build/userpatches/extensions/apt-retry-config.sh << 'EOF'
           #!/bin/bash
           
@@ -181,8 +181,6 @@ jobs:
           Acquire::https::Timeout "180";
           Acquire::ftp::Timeout "180";
           Acquire::Queue-Mode "access";
-          APT::Get::Assume-Yes "true";
-          APT::Install-Recommends "false";
           APTCONF
           }
           
