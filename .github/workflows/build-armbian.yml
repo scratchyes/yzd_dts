@@ -164,16 +164,17 @@ jobs:
           // APT配置：处理镜像同步期间的临时文件大小不匹配问题
           // 这些设置会大幅增加APT的容错能力
           
-          // 大幅增加重试次数（从默认3次增加到50次）
+          // 增加重试次数（从默认3次增加到15次）
           // 每次apt-get update会在包下载失败时重试
-          Acquire::Retries "50";
+          Acquire::Retries "15";
           
           // 增加超时时间（10分钟）以应对慢速或正在同步的镜像
           Acquire::http::Timeout "600";
           Acquire::https::Timeout "600";
           
-          // 设置最大重试延迟时间（20秒），给镜像时间完成同步
-          Acquire::Retry-Delay-Max "20";
+          // Queue模式设置：排队延迟和重试间隔
+          Acquire::Queue-Mode "host";
+          Acquire::Queue-Delay "5000000";  // 5秒延迟（微秒）
           
           // 禁用HTTP管道以避免并发下载导致的问题
           Acquire::http::Pipeline-Depth "0";
@@ -197,8 +198,9 @@ jobs:
           cat build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance
           echo "================================"
           echo "配置说明："
-          echo "- 最多重试50次，每次间隔20秒"
+          echo "- 最多重试15次（APT层面）"
           echo "- 超时设置为10分钟"
+          echo "- 队列延迟5秒，避免镜像同步冲突"
           echo "- 容忍镜像同步期间的临时文件大小不匹配"
           echo "================================"
 
