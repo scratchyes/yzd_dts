@@ -276,9 +276,20 @@ jobs:
             MOUNT_DIR=$(mktemp -d)
             sudo mount ${LOOP_DEV}p1 $MOUNT_DIR
             
+            # 检查并创建DTB目录结构
+            echo "检查DTB目录结构..."
+            if [ -d "$MOUNT_DIR/dtb/rockchip" ]; then
+              echo "DTB目录已存在: $MOUNT_DIR/dtb/rockchip"
+            else
+              echo "创建DTB目录结构..."
+              sudo mkdir -p $MOUNT_DIR/dtb/rockchip
+            fi
+            
             # 复制定制的DTB
             echo "复制RK3399-YZD DTB..."
             sudo cp /builder/rk3399-yzd-linux.dtb $MOUNT_DIR/dtb/rockchip/rk3399-yzd.dtb
+            echo "DTB文件已复制"
+            ls -lh $MOUNT_DIR/dtb/rockchip/ | grep yzd || echo "验证DTB文件..."
             
             # 卸载
             sudo umount $MOUNT_DIR
