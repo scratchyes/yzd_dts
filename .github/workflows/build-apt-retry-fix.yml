@@ -200,15 +200,13 @@ jobs:
           export ARMBIAN_MIRROR="${ARMBIAN_MIRROR}"
           
           echo "================================"
-          echo "开始编译Armbian (测试apt-retry修复)..."
+          echo "开始编译Armbian (使用清华镜像源)..."
           echo "使用镜像源: ${ARMBIAN_MIRROR}"
-          echo "启用扩展: apt-retry-extension"
           echo "================================"
           
           # 使用orangepi4-lts作为基础板（RK3399平台）
           ./compile.sh \
             ARMBIAN_MIRROR="${ARMBIAN_MIRROR}" \
-            ENABLE_EXTENSIONS="apt-retry-extension" \
             RELEASE=bookworm \
             BOARD=orangepi4-lts \
             BRANCH=current \
@@ -288,12 +286,11 @@ jobs:
         if: always()
         run: |
           echo "========================================="
-          echo "构建总结 - Apt-Retry修复测试"
+          echo "构建总结 - 使用清华镜像源"
           echo "========================================="
           echo ""
           echo "此工作流测试了以下改进:"
           echo "✓ 主机级 apt-get update 重试逻辑 (5次尝试)"
-          echo "✓ Chroot级 apt-retry-extension (10次尝试)"
           echo "✓ 清华镜像源配置"
           echo "✓ APT缓存清理"
           echo "✓ RK3399-YZD DTS/DTB适配"
