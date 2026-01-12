@@ -172,12 +172,10 @@ jobs:
             declare -g EXTENSION_PRIORITY=100  # 早期运行
           }
           
-          # 在准备chroot环境后、apt update前配置
-          function pre_install_kernel_debs__configure_apt_retries() {
-            display_alert "配置APT重试和超时" "设置重试次数和超时时间" "info"
-            
-            # 在chroot环境中创建APT配置
-            run_host_command_logged cat >> "${SDCARD}"/etc/apt/apt.conf.d/99custom-retries << 'APTCONF'
+          # 共享的APT配置内容
+          function _create_apt_retry_config() {
+            local target_file="$1"
+            cat > "${target_file}" << 'APTCONF'
           Acquire::Retries "15";
           Acquire::http::Timeout "180";
           Acquire::https::Timeout "180";
@@ -186,8 +184,17 @@ jobs:
           APT::Get::Assume-Yes "true";
           APT::Install-Recommends "false";
           APTCONF
+          }
+          
+          # 在准备chroot环境后、apt update前配置
+          function pre_install_kernel_debs__configure_apt_retries() {
+            display_alert "配置APT重试和超时" "设置重试次数和超时时间" "info"
             
-            display_alert "APT配置完成" "重试次数: 15, 超时: 180秒" "info"
+            # 在chroot环境中创建APT配置
+            if [[ -d "${SDCARD}/etc/apt/apt.conf.d" ]]; then
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d/99custom-retries"
+              display_alert "APT配置完成" "重试次数: 15, 超时: 180秒" "info"
+            fi
           }
           
           # 也在更早的阶段配置，以防第一个钩子太晚
@@ -195,16 +202,8 @@ jobs:
             display_alert "早期配置APT重试" "在rootfs缓存创建后配置" "info"
             
             if [[ -d "${SDCARD}" ]]; then
-              mkdir -p "${SDCARD}"/etc/apt/apt.conf.d
-              cat > "${SDCARD}"/etc/apt/apt.conf.d/99custom-retries << 'APTCONF'
-          Acquire::Retries "15";
-          Acquire::http::Timeout "180";
-          Acquire::https::Timeout "180";
-          Acquire::ftp::Timeout "180";
-          Acquire::Queue-Mode "access";
-          APT::Get::Assume-Yes "true";
-          APT::Install-Recommends "false";
-          APTCONF
+              mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d/99custom-retries"
               display_alert "早期APT配置完成" "重试次数: 15, 超时: 180秒" "info"
             fi
           }
