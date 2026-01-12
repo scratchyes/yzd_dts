@@ -151,29 +151,82 @@ jobs:
           echo "固件下载完成"
           ls -lh build/userpatches/overlay/lib/firmware/brcm/
 
-      - name: Configure APT retry settings
+      - name: Configure enhanced APT settings for mirror sync issues
         working-directory: /builder
         if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
         run: |
-          echo "配置APT重试设置以处理镜像同步问题..."
+          echo "配置增强APT设置以处理镜像同步问题..."
           
-          # 使用Armbian的overlay机制直接添加APT配置
-          # 这个方法不需要自定义扩展，更加可靠
-          mkdir -p build/userpatches/overlay/etc/apt/apt.conf.d
+          # 创建userpatches扩展来修改Armbian构建行为
+          mkdir -p build/userpatches
           
-          cat > build/userpatches/overlay/etc/apt/apt.conf.d/99custom-retries << 'EOF'
-          # 重试15次以应对镜像同步期间的临时失败（默认为3次）
-          Acquire::Retries "15";
-          # 3分钟HTTP超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::http::Timeout "180";
-          # 3分钟HTTPS超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::https::Timeout "180";
-          # 3分钟FTP超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::ftp::Timeout "180";
+          # 创建extension来覆盖chroot_sdcard_apt_get_update函数，增加重试次数和延迟
+          cat > build/userpatches/extension-apt-retry.sh << 'EOF'
+          # 扩展：增强APT更新重试逻辑
+          # 这个扩展覆盖默认的chroot_sdcard_apt_get_update函数
+          
+          function chroot_sdcard_apt_get_update__增强重试逻辑() {
+              display_alert "使用增强的APT更新重试逻辑" "最多重试10次，每次间隔15秒" "info"
+              
+              # 设置最大重试次数为10次（原来是3次）
+              local max_retries=10
+              local retry_count=0
+              local retry_delay=15  # 每次重试之间等待15秒
+              
+              while [ $retry_count -lt $max_retries ]; do
+                  display_alert "尝试APT更新" "第 $((retry_count + 1))/$max_retries 次" "info"
+                  
+                  # 在chroot环境中运行apt-get update
+                  if chroot_sdcard_apt_get update; then
+                      display_alert "APT更新成功" "" "info"
+                      return 0
+                  fi
+                  
+                  retry_count=$((retry_count + 1))
+                  
+                  if [ $retry_count -lt $max_retries ]; then
+                      display_alert "APT更新失败，等待${retry_delay}秒后重试" "镜像可能正在同步中..." "wrn"
+                      sleep $retry_delay
+                      
+                      # 逐渐增加延迟时间（指数退避）
+                      retry_delay=$((retry_delay + 5))
+                  fi
+              done
+              
+              display_alert "APT更新失败" "已重试${max_retries}次" "err"
+              return 1
+          }
           EOF
           
-          echo "APT重试配置已创建"
-          cat build/userpatches/overlay/etc/apt/apt.conf.d/99custom-retries
+          # 添加APT配置到overlay
+          mkdir -p build/userpatches/overlay/etc/apt/apt.conf.d
+          
+          cat > build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance << 'EOF'
+          # APT配置：处理镜像同步期间的临时问题
+          # 增加重试次数
+          Acquire::Retries "20";
+          # 增加超时时间（5分钟）
+          Acquire::http::Timeout "300";
+          Acquire::https::Timeout "300";
+          # 添加重试之间的延迟（10秒）
+          Acquire::Retries::Delay "10";
+          # 禁用HTTP管道以提高可靠性
+          Acquire::http::Pipeline-Depth "0";
+          # 允许发行信息变更
+          Acquire::AllowReleaseInfoChange "true";
+          # 对临时错误采用容错模式
+          APT::Update::Error-Mode "any";
+          # 忽略某些验证错误
+          Acquire::AllowInsecureRepositories "false";
+          Acquire::AllowDowngradeToInsecureRepositories "false";
+          EOF
+          
+          echo "APT增强配置已创建"
+          echo "=== Extension 文件 ==="
+          cat build/userpatches/extension-apt-retry.sh
+          echo ""
+          echo "=== APT 配置文件 ==="
+          cat build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance
 
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
