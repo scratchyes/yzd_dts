@@ -1,0 +1,277 @@
+#==========================================================================
+# Description: Build Armbian for RK3399-YZD
+# Copyright (C) 2026 https://github.com/scratchyes/yzd_dts
+# Based on: https://github.com/ophub/amlogic-s9xxx-armbian
+#==========================================================================
+
+name: Build RK3399-YZD Armbian
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      set_release:
+        description: "Select OS Release"
+        required: false
+        default: "bookworm"
+        type: choice
+        options:
+          - jammy
+          - noble
+          - bookworm
+          - bullseye
+      armbian_kernel:
+        description: "Select kernel version"
+        required: false
+        default: "6.1.y"
+        type: choice
+        options:
+          - 5.15.y
+          - 6.1.y
+          - 6.6.y
+          - 6.12.y
+          - 6.1.y_6.6.y
+      armbian_fstype:
+        description: "Select rootfs type"
+        required: false
+        default: "ext4"
+        type: choice
+        options:
+          - ext4
+          - btrfs
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.repository.owner.id }} == ${{ github.event.sender.id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialization environment
+        id: init
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          docker rmi $(docker images -q) 2>/dev/null || true
+          [[ -n "${AGENT_TOOLSDIRECTORY}" ]] && sudo rm -rf "${AGENT_TOOLSDIRECTORY}"
+          sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android 2>/dev/null
+          sudo swapoff -a
+          sudo rm -f /swapfile /mnt/swapfile
+          sudo -E apt-get -y update
+          sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* powershell openjdk* mongodb* moby* || true
+          sudo -E apt-get -y install device-tree-compiler qemu-user-static binfmt-support
+          sudo -E systemctl daemon-reload
+          sudo -E apt-get -y autoremove --purge
+          sudo -E apt-get clean
+          sudo timedatectl set-timezone "${TZ}"
+          echo "status=success" >> ${GITHUB_OUTPUT}
+
+      - name: Compile DTB from modified DTS
+        id: compile_dtb
+        if: ${{ steps.init.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "编译修改后的DTS为DTB..."
+          dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts 2>&1 | grep -v "Warning" || true
+          if [ -f rk3399-yzd-linux.dtb ]; then
+            echo "DTB编译成功!"
+            ls -lh rk3399-yzd-linux.dtb
+            echo "status=success" >> ${GITHUB_OUTPUT}
+          else
+            echo "DTB编译失败!"
+            exit 1
+          fi
+
+      - name: Create simulated physical disk
+        if: ${{ steps.compile_dtb.outputs.status }} == 'success' && !cancelled()
+        run: |
+          mnt_size=$(expr $(df -h /mnt | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 1)
+          root_size=$(expr $(df -h / | tail -1 | awk '{print $4}' | sed 's/[[:alpha:]]//g' | sed 's/\..*//') - 4)
+          sudo truncate -s "${mnt_size}"G /mnt/mnt.img
+          sudo truncate -s "${root_size}"G /root.img
+          sudo losetup /dev/loop6 /mnt/mnt.img
+          sudo losetup /dev/loop7 /root.img
+          sudo pvcreate /dev/loop6
+          sudo pvcreate /dev/loop7
+          sudo vgcreate github /dev/loop6 /dev/loop7
+          sudo lvcreate -n runner -l 100%FREE github
+          sudo mkfs.xfs /dev/github/runner
+          sudo mkdir -p /builder
+          sudo mount /dev/github/runner /builder
+          sudo chown -R runner.runner /builder
+          df -Th
+
+      - name: Download Armbian build system
+        id: down
+        working-directory: /builder
+        if: ${{ steps.compile_dtb.outputs.status }} == 'success' && !cancelled()
+        run: |
+          df -hT ${PWD}
+          git clone -q --single-branch --depth=1 --branch=main https://github.com/armbian/build.git build
+          echo "status=success" >> ${GITHUB_OUTPUT}
+
+      - name: Prepare RK3399-YZD DTS and DTB
+        working-directory: /builder
+        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "准备RK3399-YZD设备树文件..."
+          
+          # 复制DTB到工作目录
+          cp ${GITHUB_WORKSPACE}/rk3399-yzd-linux.dtb /builder/
+          
+          # 创建userpatches目录结构
+          mkdir -p build/userpatches/overlay
+          
+          # 复制DTS源文件
+          cp ${GITHUB_WORKSPACE}/rk3399-yzd.dts build/userpatches/overlay/
+          
+          echo "设备树文件准备完成"
+
+      - name: Download AP6356S firmware
+        working-directory: /builder
+        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "下载AP6356S WiFi/BT固件..."
+          mkdir -p build/userpatches/overlay/lib/firmware/brcm
+          
+          # 下载固件文件
+          wget -q -O build/userpatches/overlay/lib/firmware/brcm/brcmfmac4356-sdio.bin \
+            https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.bin || true
+          
+          wget -q -O build/userpatches/overlay/lib/firmware/brcm/brcmfmac4356-sdio.txt \
+            https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.txt || true
+          
+          wget -q -O build/userpatches/overlay/lib/firmware/brcm/brcmfmac4356-sdio.clm_blob \
+            https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.clm_blob || true
+          
+          echo "固件下载完成"
+          ls -lh build/userpatches/overlay/lib/firmware/brcm/
+
+      - name: Compile Armbian [ ${{ inputs.set_release }} ]
+        id: compile
+        working-directory: /builder
+        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        run: |
+          cd build/
+          # 使用orangepi4-lts作为基础板（RK3399平台）
+          ./compile.sh \
+            RELEASE=${{ inputs.set_release }} \
+            BOARD=orangepi4-lts \
+            BRANCH=current \
+            BUILD_MINIMAL=no \
+            BUILD_ONLY=default \
+            HOST=armbian \
+            BUILD_DESKTOP=no \
+            EXPERT=yes \
+            KERNEL_CONFIGURE=no \
+            COMPRESS_OUTPUTIMAGE="sha,xz" \
+            SHARE_LOG=yes
+          
+          echo "status=success" >> ${GITHUB_OUTPUT}
+
+      - name: Customize Armbian image with RK3399-YZD DTB
+        working-directory: /builder
+        if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "集成RK3399-YZD DTB到Armbian镜像..."
+          
+          # 查找生成的镜像
+          IMAGE_FILE=$(find build/output/images -name "Armbian_*.img" -type f | head -n 1)
+          
+          if [ -n "$IMAGE_FILE" ]; then
+            echo "找到镜像文件: $IMAGE_FILE"
+            
+            # 解压镜像（如果是压缩的）
+            if [[ "$IMAGE_FILE" == *.xz ]]; then
+              echo "解压镜像..."
+              xz -d "$IMAGE_FILE"
+              IMAGE_FILE="${IMAGE_FILE%.xz}"
+            fi
+            
+            # 挂载镜像
+            echo "挂载镜像..."
+            LOOP_DEV=$(sudo losetup -f --show --partscan "$IMAGE_FILE")
+            echo "Loop设备: $LOOP_DEV"
+            
+            # 挂载boot分区
+            sudo mkdir -p /mnt/boot
+            sudo mount ${LOOP_DEV}p1 /mnt/boot
+            
+            # 复制DTB文件
+            echo "复制RK3399-YZD DTB..."
+            sudo mkdir -p /mnt/boot/dtb/rockchip
+            sudo cp /builder/rk3399-yzd-linux.dtb /mnt/boot/dtb/rockchip/
+            
+            # 修改armbianEnv.txt
+            if [ -f /mnt/boot/armbianEnv.txt ]; then
+              echo "更新armbianEnv.txt..."
+              sudo sed -i 's|^fdtfile=.*|fdtfile=rockchip/rk3399-yzd-linux.dtb|' /mnt/boot/armbianEnv.txt
+              echo "fdtfile=rockchip/rk3399-yzd-linux.dtb" | sudo tee -a /mnt/boot/armbianEnv.txt
+            fi
+            
+            # 卸载
+            echo "卸载镜像..."
+            sudo umount /mnt/boot
+            sudo losetup -d $LOOP_DEV
+            
+            # 重新压缩
+            echo "压缩镜像..."
+            xz -z -9 -T0 "$IMAGE_FILE"
+            
+            # 重命名为RK3399-YZD专用镜像
+            NEW_NAME=$(basename "$IMAGE_FILE" | sed 's/Armbian/Armbian_RK3399-YZD/')
+            mv "${IMAGE_FILE}.xz" "$(dirname $IMAGE_FILE)/${NEW_NAME}.xz"
+            
+            echo "镜像定制完成: ${NEW_NAME}.xz"
+          else
+            echo "未找到Armbian镜像文件"
+            exit 1
+          fi
+
+      - name: Upload Armbian image to Release
+        uses: ncipollo/release-action@main
+        if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
+        with:
+          tag: Armbian_RK3399-YZD_${{ inputs.set_release }}_${{ inputs.armbian_kernel }}
+          artifacts: /builder/build/output/images/*RK3399-YZD*.img.xz
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            ## RK3399-YZD Armbian 固件
+            
+            ### 板载硬件支持
+            - ✅ HDMI 输出
+            - ✅ 千兆以太网 (Realtek RTL8211E)
+            - ✅ WiFi (Broadcom AP6356S)
+            - ✅ 蓝牙 (Broadcom AP6356S)
+            - ✅ USB 3.0 Type-C
+            - ✅ 音频 (RT5651 codec)
+            - ✅ eMMC 存储
+            
+            ### 固件信息
+            - **发行版**: ${{ inputs.set_release }}
+            - **内核版本**: ${{ inputs.armbian_kernel }}
+            - **文件系统**: ${{ inputs.armbian_fstype }}
+            - **构建时间**: ${{ env.PACKAGED_OUTPUTDATE }}
+            
+            ### 使用说明
+            1. 下载镜像文件 (*.img.xz)
+            2. 使用 balenaEtcher 或 dd 命令写入到 SD 卡或 eMMC
+            3. 插入板子并启动
+            4. 默认用户名: root, 密码: 1234
+            
+            ### WiFi 配置
+            WiFi 固件已预装 (AP6356S)，启动后可直接使用。
+            
+            详细文档: https://github.com/scratchyes/yzd_dts
+
+      - name: Clean up
+        if: always()
+        run: |
+          sudo rm -rf /builder/build/cache/sources
+          sudo rm -rf /builder/build/.tmp
+          df -hT ${PWD}
