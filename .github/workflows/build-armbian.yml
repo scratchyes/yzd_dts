@@ -194,8 +194,6 @@ jobs:
           Acquire::https::Timeout "180";
           # 3分钟FTP超时，为镜像同步提供充足时间（默认60秒）
           Acquire::ftp::Timeout "180";
-          # 访问模式队列，改善临时错误的处理
-          Acquire::Queue-Mode "access";
           APTCONF
               display_alert "APT配置文件已创建" "${target_dir}/99custom-retries" "info"
               return 0
