@@ -172,8 +172,8 @@ jobs:
           Acquire::http::Timeout "600";
           Acquire::https::Timeout "600";
           
-          // 在每次重试之间等待20秒，给镜像时间完成同步
-          Acquire::Retries::Delay "20";
+          // 设置最大重试延迟时间（20秒），给镜像时间完成同步
+          Acquire::Retry-Delay-Max "20";
           
           // 禁用HTTP管道以避免并发下载导致的问题
           Acquire::http::Pipeline-Depth "0";
