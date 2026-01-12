@@ -97,6 +97,11 @@ jobs:
         run: |
           echo "克隆Armbian仓库..."
           git clone --depth 1 --single-branch --branch main https://github.com/armbian/build build
+          
+          echo "克隆linux-rockchip内核源..."
+          mkdir -p build/cache/sources
+          git clone --depth 1 https://github.com/armbian/linux-rockchip build/cache/sources/linux-rockchip
+          
           echo "status=success" >> ${GITHUB_OUTPUT}
 
       - name: Prepare RK3399-YZD DTS and DTB
@@ -110,6 +115,7 @@ jobs:
           
           # 创建userpatches目录结构
           mkdir -p build/userpatches/overlay
+          mkdir -p build/userpatches/extensions
           
           # 复制DTS源文件
           cp ${GITHUB_WORKSPACE}/rk3399-yzd.dts build/userpatches/overlay/
@@ -118,12 +124,6 @@ jobs:
           echo "复制Armbian镜像配置..."
           cp ${GITHUB_WORKSPACE}/userpatches/config-default.conf build/userpatches/
           cat build/userpatches/config-default.conf
-          
-          # 复制apt重试扩展脚本
-          echo "复制apt-get重试扩展..."
-          cp ${GITHUB_WORKSPACE}/userpatches/extension-apt-retry.sh build/userpatches/
-          chmod +x build/userpatches/extension-apt-retry.sh
-          echo "扩展脚本已部署"
           
           echo "设备树文件准备完成"
 
@@ -189,7 +189,7 @@ jobs:
           fi
           echo "================================"
 
-      - name: Compile Armbian with Apt-Retry Extension [ bookworm ]
+      - name: Compile Armbian with linux-rockchip kernel [ bookworm ]
         id: compile
         working-directory: /builder
         if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
@@ -200,16 +200,19 @@ jobs:
           export ARMBIAN_MIRROR="${ARMBIAN_MIRROR}"
           
           echo "================================"
-          echo "开始编译Armbian (使用清华镜像源)..."
+          echo "开始编译Armbian (使用清华镜像源和linux-rockchip内核)..."
           echo "使用镜像源: ${ARMBIAN_MIRROR}"
+          echo "内核源: linux-rockchip"
           echo "================================"
           
           # 使用orangepi4-lts作为基础板（RK3399平台）
+          # 使用 linux-rockchip 作为内核源
           ./compile.sh \
             ARMBIAN_MIRROR="${ARMBIAN_MIRROR}" \
             RELEASE=bookworm \
             BOARD=orangepi4-lts \
             BRANCH=current \
+            KERNEL_SOURCE=linux-rockchip \
             BUILD_MINIMAL=no \
             BUILD_ONLY=default \
             HOST=armbian \
@@ -218,6 +221,17 @@ jobs:
             KERNEL_CONFIGURE=no \
             COMPRESS_OUTPUTIMAGE="sha,xz" \
             SHARE_LOG=yes
+          
+          # 检查编译结果
+          echo "================================"
+          echo "检查编译输出..."
+          if [ -d "output/images" ]; then
+            echo "Images目录内容:"
+            ls -lah output/images/
+          else
+            echo "警告: output/images 目录不存在"
+          fi
+          echo "================================"
           
           echo "status=success" >> ${GITHUB_OUTPUT}
 
@@ -298,12 +312,13 @@ jobs:
         if: always()
         run: |
           echo "========================================="
-          echo "构建总结 - 使用清华镜像源"
+          echo "构建总结 - 使用清华镜像源和linux-rockchip内核"
           echo "========================================="
           echo ""
           echo "此工作流测试了以下改进:"
           echo "✓ 主机级 apt-get update 重试逻辑 (5次尝试)"
           echo "✓ 清华镜像源配置"
+          echo "✓ linux-rockchip 内核源"
           echo "✓ APT缓存清理"
           echo "✓ RK3399-YZD DTS/DTB适配"
           echo ""
