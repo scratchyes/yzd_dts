@@ -161,35 +161,38 @@ jobs:
           mkdir -p build/userpatches/overlay/etc/apt/apt.conf.d
           
           cat > build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance << 'EOF'
-          // APT配置：处理镜像同步期间的临时文件大小不匹配问题
-          // 这些设置会大幅增加APT的容错能力
+          # APT配置：处理镜像同步期间的临时文件大小不匹配问题
+          # 这些设置会增加APT的容错能力以应对镜像同步
           
-          // 增加重试次数（从默认3次增加到15次）
-          // 每次apt-get update会在包下载失败时重试
+          # 增加重试次数（从默认3次增加到15次）
+          # 每次apt-get update会在包下载失败时重试
           Acquire::Retries "15";
           
-          // 增加超时时间（10分钟）以应对慢速或正在同步的镜像
+          # 增加超时时间（10分钟）以应对慢速或正在同步的镜像
           Acquire::http::Timeout "600";
           Acquire::https::Timeout "600";
           
-          // Queue模式设置：排队延迟和重试间隔
+          # Queue模式设置：排队延迟和重试间隔
+          # Queue-Delay单位为微秒，5000000微秒 = 5秒
           Acquire::Queue-Mode "host";
-          Acquire::Queue-Delay "5000000";  // 5秒延迟（微秒）
+          Acquire::Queue-Delay "5000000";
           
-          // 禁用HTTP管道以避免并发下载导致的问题
+          # 禁用HTTP管道以避免并发下载导致的问题
           Acquire::http::Pipeline-Depth "0";
           
-          // 允许发行信息变更（不因Release文件更新而失败）
+          # 允许发行信息变更（不因Release文件更新而失败）
           Acquire::AllowReleaseInfoChange "true";
           
-          // 对于暂时性网络错误使用容错模式
+          # 对于暂时性网络错误使用容错模式
           APT::Get::Fix-Missing "true";
           APT::Get::Fix-Broken "true";
           
-          // 允许使用过期的Release文件（镜像同步期间可能出现）
+          # 允许使用略微过期的Release文件（镜像同步期间可能出现）
+          # 注意：这会降低安全性，仅用于处理镜像同步的临时问题
+          # 如果安全性是首要考虑，建议移除此选项或使用更稳定的镜像
           Acquire::Check-Valid-Until "false";
           
-          // 即使部分更新失败也继续
+          # 即使部分更新失败也继续
           APT::Get::List-Cleanup "false";
           EOF
           
