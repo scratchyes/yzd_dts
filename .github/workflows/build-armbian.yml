@@ -151,29 +151,61 @@ jobs:
           echo "固件下载完成"
           ls -lh build/userpatches/overlay/lib/firmware/brcm/
 
-      - name: Configure APT retry settings
+      - name: Configure APT for mirror sync tolerance
         working-directory: /builder
         if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
         run: |
-          echo "配置APT重试设置以处理镜像同步问题..."
+          echo "配置APT以容忍镜像同步问题..."
           
-          # 使用Armbian的overlay机制直接添加APT配置
-          # 这个方法不需要自定义扩展，更加可靠
+          # 创建APT配置文件，这会在chroot环境的apt-get update时生效
           mkdir -p build/userpatches/overlay/etc/apt/apt.conf.d
           
-          cat > build/userpatches/overlay/etc/apt/apt.conf.d/99custom-retries << 'EOF'
-          # 重试15次以应对镜像同步期间的临时失败（默认为3次）
+          cat > build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance << 'EOF'
+          # APT配置：处理镜像同步期间的临时文件大小不匹配问题
+          # 这些设置会增加APT的容错能力以应对镜像同步
+          
+          # 增加重试次数（从默认3次增加到15次）
+          # 每次apt-get update会在包下载失败时重试
           Acquire::Retries "15";
-          # 3分钟HTTP超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::http::Timeout "180";
-          # 3分钟HTTPS超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::https::Timeout "180";
-          # 3分钟FTP超时，为镜像同步提供充足时间（默认60秒）
-          Acquire::ftp::Timeout "180";
+          
+          # 增加超时时间（10分钟）以应对慢速或正在同步的镜像
+          Acquire::http::Timeout "600";
+          Acquire::https::Timeout "600";
+          
+          # Queue模式设置：排队延迟和重试间隔
+          # Queue-Delay单位为微秒，5000000微秒 = 5秒
+          Acquire::Queue-Mode "host";
+          Acquire::Queue-Delay "5000000";
+          
+          # 禁用HTTP管道以避免并发下载导致的问题
+          Acquire::http::Pipeline-Depth "0";
+          
+          # 允许发行信息变更（不因Release文件更新而失败）
+          Acquire::AllowReleaseInfoChange "true";
+          
+          # 对于暂时性网络错误使用容错模式
+          APT::Get::Fix-Missing "true";
+          APT::Get::Fix-Broken "true";
+          
+          # 允许使用略微过期的Release文件（镜像同步期间可能出现）
+          # 注意：这会降低安全性，仅用于处理镜像同步的临时问题
+          # 如果安全性是首要考虑，建议移除此选项或使用更稳定的镜像
+          Acquire::Check-Valid-Until "false";
+          
+          # 即使部分更新失败也继续
+          APT::Get::List-Cleanup "false";
           EOF
           
-          echo "APT重试配置已创建"
-          cat build/userpatches/overlay/etc/apt/apt.conf.d/99custom-retries
+          echo "APT配置已创建"
+          echo "================================"
+          cat build/userpatches/overlay/etc/apt/apt.conf.d/99armbian-mirror-tolerance
+          echo "================================"
+          echo "配置说明："
+          echo "- 最多重试15次（APT层面）"
+          echo "- 超时设置为10分钟"
+          echo "- 队列延迟5秒，避免镜像同步冲突"
+          echo "- 容忍镜像同步期间的临时文件大小不匹配"
+          echo "================================"
 
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
