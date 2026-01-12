@@ -23,6 +23,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     name: Build RK3399-YZD Armbian with Apt-Retry Fix
+    permissions:
+      contents: write  # Required for creating releases
 
     steps:
       - name: Checkout repository
@@ -324,6 +326,96 @@ jobs:
           name: build-logs
           path: /builder/build/output/logs/
           retention-days: 7
+
+      - name: Create Release and Upload Firmware
+        if: ${{ steps.compile.outputs.status }} == 'success' && !cancelled()
+        working-directory: /builder
+        run: |
+          echo "准备发布固件到 GitHub Releases..."
+          
+          # 查找生成的镜像文件
+          IMAGE_FILES=$(find build/output/images -name "Armbian*.img.xz" -type f)
+          
+          if [ -z "$IMAGE_FILES" ]; then
+            echo "未找到镜像文件，跳过发布"
+            exit 0
+          fi
+          
+          # 生成版本标签（使用日期和提交哈希）
+          RELEASE_TAG="v$(date +%Y.%m.%d)-${GITHUB_SHA:0:7}"
+          RELEASE_NAME="Armbian RK3399-YZD $(date +%Y-%m-%d)"
+          
+          echo "发布标签: $RELEASE_TAG"
+          echo "发布名称: $RELEASE_NAME"
+          
+          # 创建发布说明
+          cat > release_notes.md << EOF
+          # Armbian RK3399-YZD 固件发布
+          
+          ## 构建信息
+          - **构建时间**: $(date '+%Y-%m-%d %H:%M:%S %Z')
+          - **分支**: ${GITHUB_REF#refs/heads/}
+          - **提交**: ${GITHUB_SHA}
+          - **内核源**: linux-rockchip
+          - **发行版**: Debian Bookworm
+          - **镜像源**: 清华大学 TUNA 镜像
+          
+          ## 功能特性
+          - ✅ 使用 linux-rockchip 内核
+          - ✅ 集成 RK3399-YZD 自定义 DTB
+          - ✅ 优化的 apt-get 更新重试逻辑
+          - ✅ 使用清华镜像源加速下载
+          
+          ## 安装说明
+          1. 下载下方的 \`.img.xz\` 文件
+          2. 解压缩: \`xz -d Armbian-*.img.xz\`
+          3. 烧录到 SD 卡或 eMMC
+          4. 首次启动后按提示配置系统
+          
+          ## 文件列表
+          EOF
+          
+          # 添加文件列表到发布说明
+          for img in $IMAGE_FILES; do
+            filename=$(basename "$img")
+            filesize=$(du -h "$img" | cut -f1)
+            echo "- **$filename** ($filesize)" >> release_notes.md
+          done
+          
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "由 GitHub Actions 自动构建 | [构建日志](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})" >> release_notes.md
+          
+          cat release_notes.md
+          
+          # 使用 gh CLI 创建发布
+          echo "${{ github.token }}" | gh auth login --with-token
+          
+          # 检查标签是否已存在，如果存在则删除
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "删除现有发布: $RELEASE_TAG"
+            gh release delete "$RELEASE_TAG" -y --cleanup-tag
+          fi
+          
+          # 创建新发布
+          gh release create "$RELEASE_TAG" \
+            --title "$RELEASE_NAME" \
+            --notes-file release_notes.md \
+            --repo "${GITHUB_REPOSITORY}"
+          
+          # 上传镜像文件
+          for img in $IMAGE_FILES; do
+            echo "上传文件: $(basename $img)"
+            gh release upload "$RELEASE_TAG" "$img" --repo "${GITHUB_REPOSITORY}"
+            
+            # 如果有 SHA 文件，也上传
+            if [ -f "${img}.sha" ]; then
+              gh release upload "$RELEASE_TAG" "${img}.sha" --repo "${GITHUB_REPOSITORY}"
+            fi
+          done
+          
+          echo "✅ 固件已成功发布到 GitHub Releases"
+          echo "发布地址: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
 
       - name: Build Summary
         if: always()
