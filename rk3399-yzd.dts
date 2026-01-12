@@ -4057,7 +4057,7 @@
 	wireless-wlan {
 		compatible = "wlan-platdata";
 		rockchip,grf = <0x16>;
-		wifi_chip_type = "ap6354";
+		wifi_chip_type = "ap6356s";
 		sdio_vref = <0x708>;
 		WIFI,host_wake_irq = <0x85 0x3 0x0>;
 		status = "okay";

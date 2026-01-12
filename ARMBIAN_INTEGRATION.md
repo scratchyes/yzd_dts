@@ -23,16 +23,16 @@
    - 支持: OTG和Host模式
    - 状态: 已启用
 
-4. **WiFi (AP6354)**
+4. **WiFi (AP6356S)**
    - 接口: SDIO (dwmmc@fe310000)
-   - 芯片: Broadcom AP6354
+   - 芯片: Broadcom AP6356S
    - 频率: 150MHz
    - 状态: 已启用
    - 配置: 支持SDR104模式
 
-5. **蓝牙 (AP6354)**
+5. **蓝牙 (AP6356S)**
    - 接口: UART4
-   - 芯片: Broadcom AP6354
+   - 芯片: Broadcom AP6356S
    - 状态: 已启用
 
 6. **音频**
@@ -85,7 +85,7 @@ dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
 
 在Armbian构建系统中，需要确保以下内核配置启用：
 
-#### WiFi/蓝牙驱动 (AP6354)
+#### WiFi/蓝牙驱动 (AP6356S)
 ```
 CONFIG_BRCMFMAC=m
 CONFIG_BRCMFMAC_SDIO=y
@@ -124,15 +124,19 @@ CONFIG_ROCKCHIP_DW_HDMI=y
 
 ### 4. WiFi固件安装
 
-AP6354需要Broadcom固件文件：
+AP6356S需要Broadcom固件文件：
 
 ```bash
 # 固件文件位置
-/lib/firmware/brcm/brcmfmac43340-sdio.bin
-/lib/firmware/brcm/brcmfmac43340-sdio.txt
+/lib/firmware/brcm/brcmfmac4356-sdio.bin
+/lib/firmware/brcm/brcmfmac4356-sdio.txt
 
-# 参考Fine3399项目获取固件
+# 对于某些内核版本，可能还需要nvram文件
+/lib/firmware/brcm/brcmfmac4356-sdio.clm_blob
+
+# 参考Fine3399项目或Armbian固件仓库获取固件
 # https://github.com/QXY716/Fine3399-rk3399-armbian
+# https://github.com/armbian/firmware
 ```
 
 ### 5. U-Boot配置

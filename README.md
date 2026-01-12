@@ -13,8 +13,8 @@
 ✅ **完全支持的功能:**
 - HDMI视频输出
 - 千兆以太网 (Realtek RTL8211E)
-- WiFi (Broadcom AP6354)
-- 蓝牙 (Broadcom AP6354)
+- WiFi (Broadcom AP6356S)
+- 蓝牙 (Broadcom AP6356S)
 - USB 3.0 Type-C (OTG + Host)
 - 音频 (RT5651 Codec)
 - eMMC存储
@@ -70,16 +70,17 @@ dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
 
 ### WiFi配置
 
-AP6354需要固件文件：
+AP6356S需要固件文件：
 
 ```bash
 # 固件位置
-/lib/firmware/brcm/brcmfmac43340-sdio.bin
-/lib/firmware/brcm/brcmfmac43340-sdio.txt
+/lib/firmware/brcm/brcmfmac4356-sdio.bin
+/lib/firmware/brcm/brcmfmac4356-sdio.txt
 ```
 
 可从以下项目获取固件：
-- [Fine3399项目](https://github.com/QXY716/Fine3399-rk3399-armbian) - 包含AP6354固件文件和配置示例
+- [Fine3399项目](https://github.com/QXY716/Fine3399-rk3399-armbian) - 包含AP6356S固件文件和配置示例
+- [Armbian固件仓库](https://github.com/armbian/firmware)
 
 ### 与Android DTS的主要差异
 
@@ -119,8 +120,8 @@ This repository contains Linux Device Tree Source files for the RK3399-YZD devel
 ✅ **Fully Supported:**
 - HDMI video output
 - Gigabit Ethernet (Realtek RTL8211E)
-- WiFi (Broadcom AP6354)
-- Bluetooth (Broadcom AP6354)
+- WiFi (Broadcom AP6356S)
+- Bluetooth (Broadcom AP6356S)
 - USB 3.0 Type-C (OTG + Host)
 - Audio (RT5651 Codec)
 - eMMC storage
@@ -176,16 +177,17 @@ See [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) for detailed integration gu
 
 ### WiFi Configuration
 
-AP6354 requires firmware files:
+AP6356S requires firmware files:
 
 ```bash
 # Firmware location
-/lib/firmware/brcm/brcmfmac43340-sdio.bin
-/lib/firmware/brcm/brcmfmac43340-sdio.txt
+/lib/firmware/brcm/brcmfmac4356-sdio.bin
+/lib/firmware/brcm/brcmfmac4356-sdio.txt
 ```
 
 Get firmware from:
-- [Fine3399 Project](https://github.com/QXY716/Fine3399-rk3399-armbian) - Contains AP6354 firmware files and configuration examples
+- [Fine3399 Project](https://github.com/QXY716/Fine3399-rk3399-armbian) - Contains AP6356S firmware files and configuration examples
+- [Armbian Firmware Repository](https://github.com/armbian/firmware)
 
 ### Key Differences from Android DTS
 
