@@ -241,12 +241,12 @@ jobs:
         run: |
           echo "集成RK3399-YZD DTB到Armbian镜像..."
           
-          # 查找生成的镜像（优先查找压缩文件）
-          IMAGE_FILE=$(find build/output/images -name "Armbian_*.img.xz" -type f | head -n 1)
+          # 查找生成的镜像（优先查找压缩文件，支持 Armbian-unofficial 命名）
+          IMAGE_FILE=$(find build/output/images -name "Armbian*.img.xz" -type f | head -n 1)
           
           if [ -z "$IMAGE_FILE" ]; then
             # 如果没有找到压缩文件，查找未压缩的
-            IMAGE_FILE=$(find build/output/images -name "Armbian_*.img" -type f | head -n 1)
+            IMAGE_FILE=$(find build/output/images -name "Armbian*.img" -type f | head -n 1)
           fi
           
           if [ -n "$IMAGE_FILE" ]; then
@@ -295,8 +295,8 @@ jobs:
         with:
           name: Armbian-RK3399-YZD-apt-retry-test
           path: |
-            /builder/build/output/images/Armbian_*.img.xz
-            /builder/build/output/images/Armbian_*.img
+            /builder/build/output/images/Armbian*.img.xz
+            /builder/build/output/images/Armbian*.img
           retention-days: 7
           if-no-files-found: warn
 
