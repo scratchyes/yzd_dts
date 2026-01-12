@@ -129,6 +129,11 @@ jobs:
           # 复制DTS源文件
           cp ${GITHUB_WORKSPACE}/rk3399-yzd.dts build/userpatches/overlay/
           
+          # 复制镜像配置文件到userpatches目录
+          echo "复制Armbian镜像配置..."
+          cp ${GITHUB_WORKSPACE}/userpatches/config-default.conf build/userpatches/
+          cat build/userpatches/config-default.conf
+          
           echo "设备树文件准备完成"
 
       - name: Download AP6356S firmware
@@ -207,14 +212,50 @@ jobs:
           echo "- 容忍镜像同步期间的临时文件大小不匹配"
           echo "================================"
 
+      - name: Clean cache and enforce mirror configuration
+        working-directory: /builder
+        if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
+        run: |
+          echo "清理构建缓存，防止使用损坏的apt缓存..."
+          
+          # 删除可能损坏的apt缓存
+          if [ -d "build/output/cache/apt" ]; then
+            echo "删除旧的apt缓存目录..."
+            sudo rm -rf build/output/cache/apt
+            echo "apt缓存已清理"
+          else
+            echo "apt缓存目录不存在，跳过清理"
+          fi
+          
+          # 验证镜像配置
+          echo "================================"
+          echo "验证Armbian镜像配置："
+          if [ -f "build/userpatches/config-default.conf" ]; then
+            echo "找到config-default.conf文件："
+            cat build/userpatches/config-default.conf
+          else
+            echo "警告：config-default.conf文件不存在！"
+          fi
+          echo "================================"
+
       - name: Compile Armbian [ ${{ inputs.set_release }} ]
         id: compile
         working-directory: /builder
         if: ${{ steps.down.outputs.status }} == 'success' && !cancelled()
         run: |
           cd build/
+          
+          # 显式设置ARMBIAN_MIRROR环境变量，确保使用清华镜像源
+          export ARMBIAN_MIRROR="https://mirrors.tuna.tsinghua.edu.cn/armbian"
+          
+          echo "================================"
+          echo "开始编译Armbian..."
+          echo "使用镜像源: ${ARMBIAN_MIRROR}"
+          echo "================================"
+          
           # 使用orangepi4-lts作为基础板（RK3399平台）
           ./compile.sh \
+            ARMBIAN_MIRROR="${ARMBIAN_MIRROR}" \
             RELEASE=${{ inputs.set_release }} \
             BOARD=orangepi4-lts \
             BRANCH=current \
