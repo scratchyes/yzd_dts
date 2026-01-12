@@ -34,7 +34,7 @@
 
 ### 快速开始
 
-#### 1. 使用预编译的DTB
+### 使用预编译的DTB
 
 ```bash
 # 复制DTB到boot分区
@@ -50,7 +50,7 @@ fdtfile=rockchip/rk3399-yzd-linux.dtb
 sudo reboot
 ```
 
-#### 2. 从源码编译
+### 从源码编译
 
 ```bash
 # 安装设备树编译器
@@ -67,9 +67,34 @@ dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
 **关于编译警告：**
 DTS编译时会产生许多警告（如 `clocks_property`、`gpios_property` 等）。这是正常现象，因为DTS是从Android DTB反编译而来，使用了十六进制phandle引用。这些警告**不影响功能** - 只要编译退出码为0，DTB即可正常工作。
 
-#### 3. 集成到Armbian构建系统
+### 集成到Armbian构建系统
 
-请参阅 [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) 获取详细的集成指南，包括：
+请参阅 [BUILD_INTEGRATION.md](BUILD_INTEGRATION.md) 获取详细的集成指南，包括：
+- 三种集成方法（ophub构建系统、Armbian官方构建、手动集成）
+- Makefile自动化构建
+- GitHub Actions自动构建
+- 板级配置文件
+
+**快速构建：**
+
+```bash
+# 安装依赖
+make install-deps
+
+# 编译DTB
+make dtb
+
+# 下载固件
+make firmware
+
+# 准备Armbian构建环境
+make armbian-prep
+
+# 编译Armbian镜像
+make armbian-build
+```
+
+详细配置请参阅 [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) 获取详细的集成指南，包括：
 - 内核配置要求
 - WiFi/蓝牙固件安装
 - U-Boot配置
@@ -181,9 +206,34 @@ dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
 **About Compilation Warnings:**
 The DTS compilation generates many warnings (e.g., `clocks_property`, `gpios_property`, etc.). This is normal because the DTS was decompiled from an Android DTB and uses hexadecimal phandle references. These warnings **do not affect functionality** - if the compilation exits with code 0, the DTB works correctly.
 
-#### 3. Integration with Armbian Build System
+### Integration with Armbian Build System
 
-See [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) for detailed integration guide including:
+See [BUILD_INTEGRATION.md](BUILD_INTEGRATION.md) for detailed integration guide, including:
+- Three integration methods (ophub build system, official Armbian build, manual integration)
+- Makefile automation
+- GitHub Actions automated builds
+- Board configuration files
+
+**Quick Build:**
+
+```bash
+# Install dependencies
+make install-deps
+
+# Compile DTB
+make dtb
+
+# Download firmware
+make firmware
+
+# Prepare Armbian build environment
+make armbian-prep
+
+# Build Armbian image
+make armbian-build
+```
+
+For detailed configuration, see [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) for:
 - Kernel configuration requirements
 - WiFi/Bluetooth firmware installation
 - U-Boot configuration
