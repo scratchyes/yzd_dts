@@ -23,16 +23,20 @@ function robust_chroot_apt_update() {
         # Clean apt cache before retry attempts (skip first attempt)
         if [ $attempt -gt 1 ]; then
             display_alert "清理apt缓存" "attempt ${attempt}" "info"
-            run_host_command_logged chroot "${SDCARD}" /bin/bash -c "apt-get clean" || true
-            run_host_command_logged chroot "${SDCARD}" /bin/bash -c "rm -rf /var/lib/apt/lists/*" || true
+            if ! run_host_command_logged chroot "${SDCARD}" /bin/bash -c "apt-get clean"; then
+                display_alert "apt-get clean失败" "continuing anyway" "wrn"
+            fi
+            if ! run_host_command_logged chroot "${SDCARD}" /bin/bash -c "rm -rf /var/lib/apt/lists/*"; then
+                display_alert "清理/var/lib/apt/lists失败" "continuing anyway" "wrn"
+            fi
             # Wait with exponential backoff
             local wait_time=$((attempt * 5))
             display_alert "等待后重试" "${wait_time}秒" "info"
             sleep $wait_time
         fi
         
-        # Try apt-get update
-        if run_host_command_logged chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive apt-get -q update"; then
+        # Try apt-get update with error handling flags
+        if run_host_command_logged chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive apt-get -q -o APT::Update::Error-Mode=any -o Acquire::Retries=1 update"; then
             display_alert "apt-get update成功" "attempt ${attempt}" "info"
             return 0
         fi
