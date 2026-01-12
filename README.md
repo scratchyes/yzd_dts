@@ -69,32 +69,33 @@ DTS编译时会产生许多警告（如 `clocks_property`、`gpios_property` 等
 
 ### 集成到Armbian构建系统
 
-请参阅 [BUILD_INTEGRATION.md](BUILD_INTEGRATION.md) 获取详细的集成指南，包括：
-- 三种集成方法（ophub构建系统、Armbian官方构建、手动集成）
-- Makefile自动化构建
-- GitHub Actions自动构建
-- 板级配置文件
+有三种方式构建Armbian固件：
 
-**快速构建：**
+**方式1: GitHub Actions 自动构建（推荐）**
 
 ```bash
-# 安装依赖
-make install-deps
-
-# 编译DTB
-make dtb
-
-# 下载固件
-make firmware
-
-# 准备Armbian构建环境
-make armbian-prep
-
-# 编译Armbian镜像
-make armbian-build
+# 1. Fork 本仓库到您的 GitHub 账号
+# 2. 进入 Actions 标签页
+# 3. 选择 "Build RK3399-YZD Armbian" 工作流
+# 4. 点击 "Run workflow" 选择构建选项
+# 5. 等待 1-2 小时后从 Releases 下载固件
 ```
 
-详细配置请参阅 [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) 获取详细的集成指南，包括：
+详细说明见 [.github/workflows/README.md](.github/workflows/README.md)
+
+**方式2: 使用 Makefile 本地构建**
+
+```bash
+make install-deps      # 安装依赖
+make dtb              # 编译DTB
+make firmware         # 下载固件
+make armbian-prep     # 准备构建环境
+make armbian-build    # 编译Armbian镜像
+```
+
+**方式3: 手动集成**
+
+请参阅 [BUILD_INTEGRATION.md](BUILD_INTEGRATION.md) 获取详细的集成指南，包括：
 - 内核配置要求
 - WiFi/蓝牙固件安装
 - U-Boot配置
@@ -208,30 +209,31 @@ The DTS compilation generates many warnings (e.g., `clocks_property`, `gpios_pro
 
 ### Integration with Armbian Build System
 
-See [BUILD_INTEGRATION.md](BUILD_INTEGRATION.md) for detailed integration guide, including:
-- Three integration methods (ophub build system, official Armbian build, manual integration)
-- Makefile automation
-- GitHub Actions automated builds
-- Board configuration files
+Three ways to build Armbian firmware:
 
-**Quick Build:**
+**Method 1: GitHub Actions Auto-build (Recommended)**
 
 ```bash
-# Install dependencies
-make install-deps
-
-# Compile DTB
-make dtb
-
-# Download firmware
-make firmware
-
-# Prepare Armbian build environment
-make armbian-prep
-
-# Build Armbian image
-make armbian-build
+# 1. Fork this repository to your GitHub account
+# 2. Go to the Actions tab
+# 3. Select "Build RK3399-YZD Armbian" workflow
+# 4. Click "Run workflow" and select build options
+# 5. Wait 1-2 hours and download firmware from Releases
 ```
+
+See [.github/workflows/README.md](.github/workflows/README.md) for details
+
+**Method 2: Local build with Makefile**
+
+```bash
+make install-deps      # Install dependencies
+make dtb              # Compile DTB
+make firmware         # Download firmware
+make armbian-prep     # Prepare build environment
+make armbian-build    # Build Armbian image
+```
+
+**Method 3: Manual integration**
 
 For detailed configuration, see [ARMBIAN_INTEGRATION.md](ARMBIAN_INTEGRATION.md) for:
 - Kernel configuration requirements
