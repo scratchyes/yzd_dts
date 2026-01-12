@@ -174,14 +174,32 @@ jobs:
           
           # 共享的APT配置内容
           function _create_apt_retry_config() {
-            local target_file="$1"
-            cat > "${target_file}" << 'APTCONF'
+            local target_dir="$1"
+            
+            # 确保目录存在
+            if [[ ! -d "${target_dir}" ]]; then
+              mkdir -p "${target_dir}" || {
+                display_alert "无法创建APT配置目录" "${target_dir}" "wrn"
+                return 1
+              }
+            fi
+            
+            # 创建配置文件
+            cat > "${target_dir}/99custom-retries" << 'APTCONF'
           Acquire::Retries "15";
           Acquire::http::Timeout "180";
           Acquire::https::Timeout "180";
           Acquire::ftp::Timeout "180";
           Acquire::Queue-Mode "access";
           APTCONF
+            
+            if [[ $? -eq 0 ]]; then
+              display_alert "APT配置文件已创建" "${target_dir}/99custom-retries" "info"
+              return 0
+            else
+              display_alert "无法创建APT配置文件" "${target_dir}/99custom-retries" "wrn"
+              return 1
+            fi
           }
           
           # 在准备chroot环境后、apt update前配置
@@ -189,9 +207,8 @@ jobs:
             display_alert "配置APT重试和超时" "设置重试次数和超时时间" "info"
             
             # 在chroot环境中创建APT配置
-            if [[ -d "${SDCARD}/etc/apt/apt.conf.d" ]]; then
-              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d/99custom-retries"
-              display_alert "APT配置完成" "重试次数: 15, 超时: 180秒" "info"
+            if [[ -d "${SDCARD}" ]]; then
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d"
             fi
           }
           
@@ -200,9 +217,7 @@ jobs:
             display_alert "早期配置APT重试" "在rootfs缓存创建后配置" "info"
             
             if [[ -d "${SDCARD}" ]]; then
-              mkdir -p "${SDCARD}/etc/apt/apt.conf.d"
-              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d/99custom-retries"
-              display_alert "早期APT配置完成" "重试次数: 15, 超时: 180秒" "info"
+              _create_apt_retry_config "${SDCARD}/etc/apt/apt.conf.d"
             fi
           }
           EOF
