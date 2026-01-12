@@ -1,11 +1,11 @@
 /dts-v1/;
 
 / {
-	compatible = "rockchip,android", "rockchip,rk3399-excavator-edp", "rockchip,rk3399";
+	compatible = "rockchip,rk3399-excavator-edp", "rockchip,rk3399";
 	interrupt-parent = <0x1>;
 	#address-cells = <0x2>;
 	#size-cells = <0x2>;
-	model = "Rockchip RK3399 Excavator Board edp (Android)";
+	model = "Rockchip RK3399 Excavator Board edp (Linux)";
 
 	ddr_timing {
 		compatible = "rockchip,ddr-timing";
@@ -4057,7 +4057,7 @@
 	wireless-wlan {
 		compatible = "wlan-platdata";
 		rockchip,grf = <0x16>;
-		wifi_chip_type = "ap6354";
+		wifi_chip_type = "ap6356s";
 		sdio_vref = <0x708>;
 		WIFI,host_wake_irq = <0x85 0x3 0x0>;
 		status = "okay";
@@ -4243,12 +4243,14 @@
 		compatible = "rockchip,uboot-charge";
 		rockchip,uboot-charge-on = <0x1>;
 		rockchip,android-charge-on = <0x0>;
+		status = "disabled";
 	};
 
 	firmware {
 
 		android {
 			compatible = "android,firmware";
+			status = "disabled";
 
 			fstab {
 				compatible = "android,fstab";
