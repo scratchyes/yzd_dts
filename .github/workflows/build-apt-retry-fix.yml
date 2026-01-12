@@ -84,7 +84,6 @@ jobs:
 
       - name: Create build directory structure
         id: prepare
-        working-directory: /builder
         if: ${{ steps.compile_dtb.outputs.status }} == 'success' && !cancelled()
         run: |
           sudo mkdir -p /builder
