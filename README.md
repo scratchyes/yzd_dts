@@ -58,7 +58,14 @@ sudo apt-get install device-tree-compiler
 
 # 编译DTS
 dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
+
+# 注意：编译过程会产生大量警告信息，这是正常的
+# 这些警告不会影响DTB文件的功能，可以安全忽略
+# 只要退出码为0（成功），DTB文件就可以使用
 ```
+
+**关于编译警告：**
+DTS编译时会产生许多警告（如 `clocks_property`、`gpios_property` 等）。这是正常现象，因为DTS是从Android DTB反编译而来，使用了十六进制phandle引用。这些警告**不影响功能** - 只要编译退出码为0，DTB即可正常工作。
 
 #### 3. 集成到Armbian构建系统
 
@@ -165,7 +172,14 @@ sudo apt-get install device-tree-compiler
 
 # Compile DTS
 dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
+
+# Note: You will see many warnings during compilation, this is normal
+# These warnings do not affect functionality and can be safely ignored
+# As long as the exit code is 0 (success), the DTB file is usable
 ```
+
+**About Compilation Warnings:**
+The DTS compilation generates many warnings (e.g., `clocks_property`, `gpios_property`, etc.). This is normal because the DTS was decompiled from an Android DTB and uses hexadecimal phandle references. These warnings **do not affect functionality** - if the compilation exits with code 0, the DTB works correctly.
 
 #### 3. Integration with Armbian Build System
 

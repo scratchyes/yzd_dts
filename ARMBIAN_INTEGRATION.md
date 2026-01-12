@@ -76,10 +76,20 @@
 # 使用设备树编译器编译
 dtc -I dts -O dtb -o rk3399-yzd-linux.dtb rk3399-yzd.dts
 
+# 注意：编译过程会产生大量警告信息，这是正常的
+# 这些警告不会影响DTB文件的功能，可以安全忽略
+# 只要退出码为0（成功），DTB文件就可以使用
+
 # 或者在Armbian构建系统中
 # 将rk3399-yzd.dts复制到: 
 # build/userpatches/overlay/rk3399-yzd.dts
 ```
+
+**关于编译警告的说明：**
+- DTS编译时会产生许多警告（如 `clocks_property`, `gpios_property` 等）
+- 这些警告是由于DTS是从Android DTB反编译而来，使用了十六进制phandle引用
+- 这些警告**不影响功能**，DTB可以正常使用
+- 只要编译退出码为0，表示编译成功
 
 ### 3. Armbian构建配置
 
