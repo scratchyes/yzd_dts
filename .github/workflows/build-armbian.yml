@@ -182,7 +182,8 @@ jobs:
           Acquire::AllowReleaseInfoChange "true";
           
           // 对于暂时性网络错误使用容错模式
-          APT::Update::Error-Mode "any";
+          APT::Get::Fix-Missing "true";
+          APT::Get::Fix-Broken "true";
           
           // 允许使用过期的Release文件（镜像同步期间可能出现）
           Acquire::Check-Valid-Until "false";
