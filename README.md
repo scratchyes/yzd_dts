@@ -29,8 +29,17 @@
 
 - `rk3399-yzd.dts` - Linux设备树源文件
 - `rk3399-yzd-linux.dtb` - 编译后的设备树二进制文件
+- `COMPARISON.md` - **YZD与EVB板卡详细对比文档** 📊
 - `ARMBIAN_INTEGRATION.md` - Armbian集成详细指南（中文）
 - `CHANGES.md` - Android到Linux转换的技术文档
+
+### 📋 板卡选择指南
+
+**不确定使用哪个板卡？** 请查看 [COMPARISON.md](COMPARISON.md) 获取YZD、EVB和EVB-IND-LPDDR4的详细对比，包括：
+- 硬件配置差异
+- 功能特性对比
+- 应用场景推荐
+- 技术规格总结
 
 ### 快速开始
 
@@ -169,8 +178,17 @@ This repository contains Linux Device Tree Source files for the RK3399-YZD devel
 
 - `rk3399-yzd.dts` - Linux Device Tree Source
 - `rk3399-yzd-linux.dtb` - Compiled Device Tree Binary
+- `COMPARISON.md` - **Detailed YZD vs EVB Board Comparison** 📊
 - `ARMBIAN_INTEGRATION.md` - Detailed Armbian integration guide (Chinese)
 - `CHANGES.md` - Technical documentation of Android to Linux conversion
+
+### 📋 Board Selection Guide
+
+**Not sure which board to use?** Check [COMPARISON.md](COMPARISON.md) for a detailed comparison of YZD, EVB, and EVB-IND-LPDDR4, including:
+- Hardware configuration differences
+- Feature comparisons
+- Application scenario recommendations
+- Technical specifications summary
 
 ### Quick Start
 
