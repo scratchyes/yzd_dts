@@ -31,6 +31,36 @@
 - `rk3399-yzd-linux.dtb` - 编译后的设备树二进制文件
 - `ARMBIAN_INTEGRATION.md` - Armbian集成详细指南（中文）
 - `CHANGES.md` - Android到Linux转换的技术文档
+- `boot/` - 其他设备(SW799)的可启动系统配置文件，可在本主板启动但部分功能不兼容
+
+### boot文件夹说明
+
+`boot/` 文件夹包含来自其他RK3399设备(SW799)的完整启动配置文件，这些文件已经过验证，可以在RK3399-YZD主板上启动，但部分硬件功能不完全兼容。
+
+**硬件兼容性状态:**
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| HDMI | ✅ 正常 | 视频输出正常工作 |
+| RJ45 以太网 | ✅ 正常 | 千兆以太网正常工作 |
+| Type-C | ⚠️ 可能正常 | 需要进一步测试 |
+| WiFi 无线网卡 | ❌ 不工作 | 无法搜索到WiFi网络 |
+| USB 3.0 | ❌ 不工作 | USB 3.0端口不可用 |
+| USB 2.0 | ❌ 不工作 | USB 2.0端口不可用 |
+
+> ⚠️ **注意:** 如需完整的硬件支持，建议使用本仓库的 `rk3399-yzd-linux.dtb` 设备树文件替换 `boot/` 中的DTB文件。
+
+**文件内容:**
+- `Image-4.4.194` - Linux 4.4.194内核镜像 (ARM64)
+- `initrd-4.4.194` - 初始化内存盘
+- `config-4.4.194` - 内核编译配置文件
+- `System.map-4.4.194` - 内核符号表
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - 设备树二进制文件
+- `extlinux/extlinux.conf` - 启动加载器配置文件
+- `logo.bmp` / `logo_kernel.bmp` - 启动画面图片
+
+**使用方法:**
+将 `boot/` 文件夹内容复制到目标设备的boot分区即可启动系统。
 
 ### 快速开始
 
@@ -171,6 +201,36 @@ This repository contains Linux Device Tree Source files for the RK3399-YZD devel
 - `rk3399-yzd-linux.dtb` - Compiled Device Tree Binary
 - `ARMBIAN_INTEGRATION.md` - Detailed Armbian integration guide (Chinese)
 - `CHANGES.md` - Technical documentation of Android to Linux conversion
+- `boot/` - Bootable system configuration files from another device (SW799), can boot on this board but with partial hardware compatibility
+
+### Boot Folder
+
+The `boot/` folder contains complete boot configuration files from another RK3399 device (SW799). These files have been verified to boot on the RK3399-YZD board, but some hardware features are not fully compatible.
+
+**Hardware Compatibility Status:**
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| HDMI | ✅ Working | Video output works correctly |
+| RJ45 Ethernet | ✅ Working | Gigabit Ethernet works correctly |
+| Type-C | ⚠️ May work | Requires further testing |
+| WiFi | ❌ Not working | Cannot detect WiFi networks |
+| USB 3.0 | ❌ Not working | USB 3.0 ports unavailable |
+| USB 2.0 | ❌ Not working | USB 2.0 ports unavailable |
+
+> ⚠️ **Note:** For full hardware support, it is recommended to replace the DTB file in `boot/` with the `rk3399-yzd-linux.dtb` device tree file from this repository.
+
+**Contents:**
+- `Image-4.4.194` - Linux 4.4.194 kernel image (ARM64)
+- `initrd-4.4.194` - Initial RAM disk
+- `config-4.4.194` - Kernel build configuration
+- `System.map-4.4.194` - Kernel symbol table
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - Device Tree Binary files
+- `extlinux/extlinux.conf` - Boot loader configuration
+- `logo.bmp` / `logo_kernel.bmp` - Boot splash images
+
+**Usage:**
+Copy the contents of the `boot/` folder to the boot partition of the target device to boot the system.
 
 ### Quick Start
 
