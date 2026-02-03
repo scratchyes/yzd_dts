@@ -31,8 +31,92 @@
 - `rk3399-yzd-linux.dtb` - 编译后的设备树二进制文件
 - `ARMBIAN_INTEGRATION.md` - Armbian集成详细指南（中文）
 - `CHANGES.md` - Android到Linux转换的技术文档
+- `boot/` - 完整的可启动系统文件，已配置YZD专用设备树，硬件功能完全支持
+
+### boot文件夹说明
+
+`boot/` 文件夹包含完整的Linux启动配置文件，已配置使用本仓库的 `rk3399-yzd-linux.dtb` 设备树，可以在RK3399-YZD主板上完整运行。
+
+**硬件兼容性状态:**
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| HDMI | ✅ 正常 | 视频输出正常工作 |
+| RJ45 以太网 | ✅ 正常 | 千兆以太网 (RTL8211E) |
+| WiFi 无线网卡 | ✅ 正常 | Broadcom AP6356S (需要固件) |
+| 蓝牙 | ✅ 正常 | Broadcom AP6356S |
+| USB 3.0 Type-C | ✅ 正常 | OTG + Host 模式 |
+| USB 2.0 | ✅ 正常 | USB 2.0端口可用 |
+| 音频 | ✅ 正常 | RT5651 Codec |
+| eMMC存储 | ✅ 正常 | eMMC存储正常 |
+
+> ℹ️ **WiFi固件:** AP6356S WiFi需要固件文件，请参考下方的WiFi配置部分安装固件。
+
+**文件内容:**
+- `Image-4.4.194` - Linux 4.4.194内核镜像 (ARM64)
+- `initrd-4.4.194` - 初始化内存盘
+- `config-4.4.194` - 内核编译配置文件
+- `System.map-4.4.194` - 内核符号表
+- `rk3399-yzd-linux.dtb` - RK3399-YZD专用设备树 (已配置)
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - 原始SW799设备树 (备份)
+- `extlinux/extlinux.conf` - 启动加载器配置文件
+- `logo.bmp` / `logo_kernel.bmp` - 启动画面图片
+
+**使用方法:**
+将 `boot/` 文件夹内容复制到目标设备的boot分区即可启动系统。
 
 ### 快速开始
+
+#### 方法1: 使用一键安装脚本（推荐）
+
+**如果没有安装 git，先安装:**
+```bash
+apt update && apt install -y git wget curl
+```
+
+**下载并运行脚本:**
+```bash
+# 方式A: 使用git克隆（推荐）
+git clone https://github.com/scratchyes/yzd_dts.git
+cd yzd_dts
+sudo ./install.sh
+
+# 方式B: 不使用git，直接下载压缩包
+wget https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+
+# 方式C: 使用curl下载
+curl -LO https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+```
+
+脚本功能：
+- ✅ 自动检测 boot 分区
+- ✅ 备份原有文件
+- ✅ 复制所有 boot 文件
+- ✅ 自动下载安装 WiFi 固件
+- ✅ 验证安装完整性
+
+#### 方法2: 手动复制
+
+```bash
+# 复制boot文件夹内容
+sudo cp -r boot/* /boot/
+
+# 安装WiFi固件
+sudo mkdir -p /lib/firmware/brcm
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.bin \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.bin
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.txt \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.txt
+
+# 重启
+sudo reboot
+```
 
 ### 使用预编译的DTB
 
@@ -171,10 +255,94 @@ This repository contains Linux Device Tree Source files for the RK3399-YZD devel
 - `rk3399-yzd-linux.dtb` - Compiled Device Tree Binary
 - `ARMBIAN_INTEGRATION.md` - Detailed Armbian integration guide (Chinese)
 - `CHANGES.md` - Technical documentation of Android to Linux conversion
+- `boot/` - Complete bootable system files configured for RK3399-YZD with full hardware support
+
+### Boot Folder
+
+The `boot/` folder contains complete Linux boot configuration files, pre-configured with the `rk3399-yzd-linux.dtb` device tree for full hardware support on the RK3399-YZD board.
+
+**Hardware Compatibility Status:**
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| HDMI | ✅ Working | Video output works correctly |
+| RJ45 Ethernet | ✅ Working | Gigabit Ethernet (RTL8211E) |
+| WiFi | ✅ Working | Broadcom AP6356S (firmware required) |
+| Bluetooth | ✅ Working | Broadcom AP6356S |
+| USB 3.0 Type-C | ✅ Working | OTG + Host mode |
+| USB 2.0 | ✅ Working | USB 2.0 ports available |
+| Audio | ✅ Working | RT5651 Codec |
+| eMMC Storage | ✅ Working | eMMC storage works |
+
+> ℹ️ **WiFi Firmware:** AP6356S WiFi requires firmware files. See the WiFi Configuration section below for installation.
+
+**Contents:**
+- `Image-4.4.194` - Linux 4.4.194 kernel image (ARM64)
+- `initrd-4.4.194` - Initial RAM disk
+- `config-4.4.194` - Kernel build configuration
+- `System.map-4.4.194` - Kernel symbol table
+- `rk3399-yzd-linux.dtb` - RK3399-YZD specific Device Tree (configured)
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - Original SW799 Device Tree (backup)
+- `extlinux/extlinux.conf` - Boot loader configuration
+- `logo.bmp` / `logo_kernel.bmp` - Boot splash images
+
+**Usage:**
+Copy the contents of the `boot/` folder to the boot partition of the target device to boot the system.
 
 ### Quick Start
 
-#### 1. Using Precompiled DTB
+#### Method 1: One-Click Install Script (Recommended)
+
+**If git is not installed, install it first:**
+```bash
+apt update && apt install -y git wget curl
+```
+
+**Download and run script:**
+```bash
+# Option A: Clone with git (Recommended)
+git clone https://github.com/scratchyes/yzd_dts.git
+cd yzd_dts
+sudo ./install.sh
+
+# Option B: Download zip without git
+wget https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+
+# Option C: Download with curl
+curl -LO https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+```
+
+Script features:
+- ✅ Auto-detect boot partition
+- ✅ Backup existing files
+- ✅ Copy all boot files
+- ✅ Auto-download and install WiFi firmware
+- ✅ Verify installation integrity
+
+#### Method 2: Manual Copy
+
+```bash
+# Copy boot folder contents
+sudo cp -r boot/* /boot/
+
+# Install WiFi firmware
+sudo mkdir -p /lib/firmware/brcm
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.bin \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.bin
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.txt \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.txt
+
+# Reboot
+sudo reboot
+```
+
+#### Method 3: Using Precompiled DTB Only
 
 ```bash
 # Copy DTB to boot partition
