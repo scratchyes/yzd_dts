@@ -69,17 +69,29 @@
 
 #### 方法1: 使用一键安装脚本（推荐）
 
+**如果没有安装 git，先安装:**
 ```bash
-# 下载或克隆本仓库
+apt update && apt install -y git wget curl
+```
+
+**下载并运行脚本:**
+```bash
+# 方式A: 使用git克隆（推荐）
 git clone https://github.com/scratchyes/yzd_dts.git
 cd yzd_dts
-
-# 运行一键安装脚本
 sudo ./install.sh
 
-# 或者指定目标分区/挂载点
-sudo ./install.sh /dev/mmcblk0p1
-sudo ./install.sh /boot
+# 方式B: 不使用git，直接下载压缩包
+wget https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+
+# 方式C: 使用curl下载
+curl -LO https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
 ```
 
 脚本功能：
@@ -281,17 +293,29 @@ Copy the contents of the `boot/` folder to the boot partition of the target devi
 
 #### Method 1: One-Click Install Script (Recommended)
 
+**If git is not installed, install it first:**
 ```bash
-# Clone this repository
+apt update && apt install -y git wget curl
+```
+
+**Download and run script:**
+```bash
+# Option A: Clone with git (Recommended)
 git clone https://github.com/scratchyes/yzd_dts.git
 cd yzd_dts
-
-# Run the install script
 sudo ./install.sh
 
-# Or specify target partition/mount point
-sudo ./install.sh /dev/mmcblk0p1
-sudo ./install.sh /boot
+# Option B: Download zip without git
+wget https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
+
+# Option C: Download with curl
+curl -LO https://github.com/scratchyes/yzd_dts/archive/refs/heads/main.zip
+unzip main.zip
+cd yzd_dts-main
+sudo ./install.sh
 ```
 
 Script features:
