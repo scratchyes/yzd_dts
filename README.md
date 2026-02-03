@@ -67,6 +67,45 @@
 
 ### 快速开始
 
+#### 方法1: 使用一键安装脚本（推荐）
+
+```bash
+# 下载或克隆本仓库
+git clone https://github.com/scratchyes/yzd_dts.git
+cd yzd_dts
+
+# 运行一键安装脚本
+sudo ./install.sh
+
+# 或者指定目标分区/挂载点
+sudo ./install.sh /dev/mmcblk0p1
+sudo ./install.sh /boot
+```
+
+脚本功能：
+- ✅ 自动检测 boot 分区
+- ✅ 备份原有文件
+- ✅ 复制所有 boot 文件
+- ✅ 自动下载安装 WiFi 固件
+- ✅ 验证安装完整性
+
+#### 方法2: 手动复制
+
+```bash
+# 复制boot文件夹内容
+sudo cp -r boot/* /boot/
+
+# 安装WiFi固件
+sudo mkdir -p /lib/firmware/brcm
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.bin \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.bin
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.txt \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.txt
+
+# 重启
+sudo reboot
+```
+
 ### 使用预编译的DTB
 
 ```bash
@@ -240,7 +279,46 @@ Copy the contents of the `boot/` folder to the boot partition of the target devi
 
 ### Quick Start
 
-#### 1. Using Precompiled DTB
+#### Method 1: One-Click Install Script (Recommended)
+
+```bash
+# Clone this repository
+git clone https://github.com/scratchyes/yzd_dts.git
+cd yzd_dts
+
+# Run the install script
+sudo ./install.sh
+
+# Or specify target partition/mount point
+sudo ./install.sh /dev/mmcblk0p1
+sudo ./install.sh /boot
+```
+
+Script features:
+- ✅ Auto-detect boot partition
+- ✅ Backup existing files
+- ✅ Copy all boot files
+- ✅ Auto-download and install WiFi firmware
+- ✅ Verify installation integrity
+
+#### Method 2: Manual Copy
+
+```bash
+# Copy boot folder contents
+sudo cp -r boot/* /boot/
+
+# Install WiFi firmware
+sudo mkdir -p /lib/firmware/brcm
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.bin \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.bin
+sudo wget -O /lib/firmware/brcm/brcmfmac4356-sdio.txt \
+    https://github.com/armbian/firmware/raw/master/brcm/brcmfmac4356-sdio.txt
+
+# Reboot
+sudo reboot
+```
+
+#### Method 3: Using Precompiled DTB Only
 
 ```bash
 # Copy DTB to boot partition
