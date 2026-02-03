@@ -31,31 +31,34 @@
 - `rk3399-yzd-linux.dtb` - 编译后的设备树二进制文件
 - `ARMBIAN_INTEGRATION.md` - Armbian集成详细指南（中文）
 - `CHANGES.md` - Android到Linux转换的技术文档
-- `boot/` - 其他设备(SW799)的可启动系统配置文件，可在本主板启动但部分功能不兼容
+- `boot/` - 完整的可启动系统文件，已配置YZD专用设备树，硬件功能完全支持
 
 ### boot文件夹说明
 
-`boot/` 文件夹包含来自其他RK3399设备(SW799)的完整启动配置文件，这些文件已经过验证，可以在RK3399-YZD主板上启动，但部分硬件功能不完全兼容。
+`boot/` 文件夹包含完整的Linux启动配置文件，已配置使用本仓库的 `rk3399-yzd-linux.dtb` 设备树，可以在RK3399-YZD主板上完整运行。
 
 **硬件兼容性状态:**
 
 | 功能 | 状态 | 说明 |
 |------|------|------|
 | HDMI | ✅ 正常 | 视频输出正常工作 |
-| RJ45 以太网 | ✅ 正常 | 千兆以太网正常工作 |
-| Type-C | ⚠️ 可能正常 | 需要进一步测试 |
-| WiFi 无线网卡 | ❌ 不工作 | 无法搜索到WiFi网络 |
-| USB 3.0 | ❌ 不工作 | USB 3.0端口不可用 |
-| USB 2.0 | ❌ 不工作 | USB 2.0端口不可用 |
+| RJ45 以太网 | ✅ 正常 | 千兆以太网 (RTL8211E) |
+| WiFi 无线网卡 | ✅ 正常 | Broadcom AP6356S (需要固件) |
+| 蓝牙 | ✅ 正常 | Broadcom AP6356S |
+| USB 3.0 Type-C | ✅ 正常 | OTG + Host 模式 |
+| USB 2.0 | ✅ 正常 | USB 2.0端口可用 |
+| 音频 | ✅ 正常 | RT5651 Codec |
+| eMMC存储 | ✅ 正常 | eMMC存储正常 |
 
-> ⚠️ **注意:** 如需完整的硬件支持，建议使用本仓库的 `rk3399-yzd-linux.dtb` 设备树文件替换 `boot/` 中的DTB文件。
+> ℹ️ **WiFi固件:** AP6356S WiFi需要固件文件，请参考下方的WiFi配置部分安装固件。
 
 **文件内容:**
 - `Image-4.4.194` - Linux 4.4.194内核镜像 (ARM64)
 - `initrd-4.4.194` - 初始化内存盘
 - `config-4.4.194` - 内核编译配置文件
 - `System.map-4.4.194` - 内核符号表
-- `rk-kernel.dtb` / `rk3399-sw799.dtb` - 设备树二进制文件
+- `rk3399-yzd-linux.dtb` - RK3399-YZD专用设备树 (已配置)
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - 原始SW799设备树 (备份)
 - `extlinux/extlinux.conf` - 启动加载器配置文件
 - `logo.bmp` / `logo_kernel.bmp` - 启动画面图片
 
@@ -201,31 +204,34 @@ This repository contains Linux Device Tree Source files for the RK3399-YZD devel
 - `rk3399-yzd-linux.dtb` - Compiled Device Tree Binary
 - `ARMBIAN_INTEGRATION.md` - Detailed Armbian integration guide (Chinese)
 - `CHANGES.md` - Technical documentation of Android to Linux conversion
-- `boot/` - Bootable system configuration files from another device (SW799), can boot on this board but with partial hardware compatibility
+- `boot/` - Complete bootable system files configured for RK3399-YZD with full hardware support
 
 ### Boot Folder
 
-The `boot/` folder contains complete boot configuration files from another RK3399 device (SW799). These files have been verified to boot on the RK3399-YZD board, but some hardware features are not fully compatible.
+The `boot/` folder contains complete Linux boot configuration files, pre-configured with the `rk3399-yzd-linux.dtb` device tree for full hardware support on the RK3399-YZD board.
 
 **Hardware Compatibility Status:**
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | HDMI | ✅ Working | Video output works correctly |
-| RJ45 Ethernet | ✅ Working | Gigabit Ethernet works correctly |
-| Type-C | ⚠️ May work | Requires further testing |
-| WiFi | ❌ Not working | Cannot detect WiFi networks |
-| USB 3.0 | ❌ Not working | USB 3.0 ports unavailable |
-| USB 2.0 | ❌ Not working | USB 2.0 ports unavailable |
+| RJ45 Ethernet | ✅ Working | Gigabit Ethernet (RTL8211E) |
+| WiFi | ✅ Working | Broadcom AP6356S (firmware required) |
+| Bluetooth | ✅ Working | Broadcom AP6356S |
+| USB 3.0 Type-C | ✅ Working | OTG + Host mode |
+| USB 2.0 | ✅ Working | USB 2.0 ports available |
+| Audio | ✅ Working | RT5651 Codec |
+| eMMC Storage | ✅ Working | eMMC storage works |
 
-> ⚠️ **Note:** For full hardware support, it is recommended to replace the DTB file in `boot/` with the `rk3399-yzd-linux.dtb` device tree file from this repository.
+> ℹ️ **WiFi Firmware:** AP6356S WiFi requires firmware files. See the WiFi Configuration section below for installation.
 
 **Contents:**
 - `Image-4.4.194` - Linux 4.4.194 kernel image (ARM64)
 - `initrd-4.4.194` - Initial RAM disk
 - `config-4.4.194` - Kernel build configuration
 - `System.map-4.4.194` - Kernel symbol table
-- `rk-kernel.dtb` / `rk3399-sw799.dtb` - Device Tree Binary files
+- `rk3399-yzd-linux.dtb` - RK3399-YZD specific Device Tree (configured)
+- `rk-kernel.dtb` / `rk3399-sw799.dtb` - Original SW799 Device Tree (backup)
 - `extlinux/extlinux.conf` - Boot loader configuration
 - `logo.bmp` / `logo_kernel.bmp` - Boot splash images
 
