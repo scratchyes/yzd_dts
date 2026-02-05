@@ -66,7 +66,7 @@ function _try_gh_smart_proxy() {
     if [ $direct_success -eq 1 ]; then
         echo -e "\033[32m[通畅]\033[0m"
         # 尝试��连
-        "$cmd_type" "${args[@]}"
+        command "$cmd_type" "${args[@]}"
         local res=$?
         if [ $res -eq 0 ]; then
             return 0
@@ -118,17 +118,17 @@ function _exec_proxy_cmd() {
     echo -e "\033[34m[尝试镜像] $mirror ...\033[0m"
 
     if [ "$cmd_type" == "git" ]; then
-        git "${new_args[@]}"
+        command git "${new_args[@]}"
         local res=$?
         if [ $res -eq 0 ]; then
             local repo_name=$(basename "$original_url" .git)
             if [ -d "$repo_name" ]; then
-                (cd "$repo_name" && git remote set-url origin "$original_url")
+                (cd "$repo_name" && command git remote set-url origin "$original_url")
             fi
             return 0
         fi
     elif [ "$cmd_type" == "wget" ]; then
-        wget "${new_args[@]}"
+        command wget "${new_args[@]}"
         return $?
     fi
     return 1
