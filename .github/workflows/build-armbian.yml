@@ -62,7 +62,27 @@ jobs:
           sudo rm -rf /usr/share/dotnet /etc/apt/sources.list.d /usr/local/lib/android 2>/dev/null
           sudo swapoff -a
           sudo rm -f /swapfile /mnt/swapfile
-          sudo -E apt-get -y update
+          
+          # Robust apt-get update with retry logic and cache clearing
+          max_attempts=5
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+              echo "尝试第 ${attempt}/${max_attempts} 次 apt-get update..."
+              sudo apt-get clean
+              sudo rm -rf /var/lib/apt/lists/*
+              if sudo -E apt-get -y update; then
+                  echo "apt-get update 成功!"
+                  break
+              fi
+              if [ $attempt -eq $max_attempts ]; then
+                  echo "错误: apt-get update 在 ${max_attempts} 次尝试后仍然失败"
+                  exit 1
+              fi
+              echo "apt-get update 失败，等待 10 秒后重试..."
+              sleep 10
+              attempt=$((attempt+1))
+          done
+          
           sudo -E apt-get -y purge azure-cli ghc* zulu* llvm* firefox google* dotnet* powershell openjdk* mongodb* moby* || true
           sudo -E apt-get -y install device-tree-compiler qemu-user-static binfmt-support
           sudo -E systemctl daemon-reload
@@ -133,6 +153,12 @@ jobs:
           echo "复制Armbian镜像配置..."
           cp ${GITHUB_WORKSPACE}/userpatches/config-default.conf build/userpatches/
           cat build/userpatches/config-default.conf
+          
+          # 复制apt重试扩展脚本
+          echo "复制apt-get重试扩展..."
+          cp ${GITHUB_WORKSPACE}/userpatches/extension-apt-retry.sh build/userpatches/
+          chmod +x build/userpatches/extension-apt-retry.sh
+          echo "扩展脚本已部署"
           
           echo "设备树文件准备完成"
 
@@ -256,6 +282,7 @@ jobs:
           # 使用orangepi4-lts作为基础板（RK3399平台）
           ./compile.sh \
             ARMBIAN_MIRROR="${ARMBIAN_MIRROR}" \
+            ENABLE_EXTENSIONS="apt-retry-extension" \
             RELEASE=${{ inputs.set_release }} \
             BOARD=orangepi4-lts \
             BRANCH=current \
